@@ -86,18 +86,27 @@ module.exports = class Route
 
     url = @pattern
 
+    # Replace param in URL.
+    # If value is undefined, remove both param name and next slash
+    replaceParamInUrl = (url, name, value) =>
+      value = @replaceParamValue(name, value, 'out')
+      if value?
+        url.replace ///[:*]#{name}///g, value
+      else
+        url.replace ///[:*]#{name}\/?///g, ''
+
     # From a params hash; we need to be able to return
     # the actual URL this route represents.
     # Iterate and replace params in pattern.
     for name in @requiredParams
       value = params[name]
-      url = url.replace ///[:*]#{name}///g, @replaceParamValue(name, value, 'out')
+      url = replaceParamInUrl url, name, value
       delete remainingParams[name]
 
     # Replace optional params.
     for name in @optionalParams
       if value = params[name]
-        url = url.replace ///[:*]#{name}///g, @replaceParamValue(name, value, 'out')
+        url = replaceParamInUrl url, name, value
         delete remainingParams[name]
 
     # Kill unfulfilled optional portions.
