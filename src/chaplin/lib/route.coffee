@@ -91,13 +91,13 @@ module.exports = class Route
     # Iterate and replace params in pattern.
     for name in @requiredParams
       value = params[name]
-      url = url.replace ///[:*]#{name}///g, value
+      url = url.replace ///[:*]#{name}///g, @replaceParamValue(name, value, 'out')
       delete remainingParams[name]
 
     # Replace optional params.
     for name in @optionalParams
       if value = params[name]
-        url = url.replace ///[:*]#{name}///g, value
+        url = url.replace ///[:*]#{name}///g, @replaceParamValue(name, value, 'out')
         delete remainingParams[name]
 
     # Kill unfulfilled optional portions.
@@ -198,6 +198,12 @@ module.exports = class Route
     # Parse :foo and *bar, replacing via callback.
     s.replace paramRegExp, callback
 
+  replaceParamValue: (name, value, direction) =>
+    if @options.replaceParams?[name]
+      @options.replaceParams[name][direction](value)
+    else
+      value
+
   paramCapturePattern: (param) ->
     if param.charAt(0) is ':'
       # Regexp for :foo.
@@ -257,6 +263,6 @@ module.exports = class Route
     # Fill the hash using param names and the matches.
     for match, index in matches.slice(1)
       paramName = if @allParams.length then @allParams[index] else index
-      params[paramName] = match
+      params[paramName] = @replaceParamValue(paramName, match, 'in')
 
     params
