@@ -1,5 +1,5 @@
 /*!
- * Chaplin 1.0.0
+ * Chaplin 1.1.0
  *
  * Chaplin may be freely distributed under the MIT license.
  * For all details and documentation:
@@ -274,7 +274,8 @@ module.exports = Dispatcher = (function() {
       controllerPath: 'controllers/',
       controllerSuffix: '_controller'
     });
-    return this.subscribeEvent('router:match', this.dispatch);
+    this.subscribeEvent('router:match', this.dispatch);
+    return mediator.setHandler('router:getCurrentRoute', this.getCurrentRoute, this);
   };
 
   Dispatcher.prototype.dispatch = function(route, params, options) {
@@ -375,6 +376,14 @@ module.exports = Dispatcher = (function() {
     } else {
       return executeAction();
     }
+  };
+
+  Dispatcher.prototype.getCurrentRoute = function() {
+    return {
+      route: this.currentRoute,
+      params: this.currentParams,
+      query: this.currentQuery
+    };
   };
 
   Dispatcher.prototype.disposed = false;
@@ -2030,6 +2039,7 @@ module.exports = Route = (function() {
     this.controller = controller;
     this.action = action;
     this.handler = __bind(this.handler, this);
+    this.replaceParamValue = __bind(this.replaceParamValue, this);
     this.replaceParams = __bind(this.replaceParams, this);
     this.parseOptionalPortion = __bind(this.parseOptionalPortion, this);
     if (typeof this.pattern !== 'string') {
@@ -2081,25 +2091,35 @@ module.exports = Route = (function() {
   };
 
   Route.prototype.reverse = function(params, query) {
-    var name, raw, remainingParams, url, value, _i, _j, _len, _len1, _ref, _ref1;
+    var name, raw, remainingParams, replaceParamInUrl, url, value, _i, _j, _len, _len1, _ref, _ref1;
     params = this.normalizeParams(params);
     remainingParams = _.extend({}, params);
     if (params === false) {
       return false;
     }
     url = this.pattern;
+    replaceParamInUrl = (function(_this) {
+      return function(url, name, value) {
+        value = _this.replaceParamValue(name, value, 'out');
+        if (value != null) {
+          return url.replace(RegExp("[:*]" + name, "g"), value);
+        } else {
+          return url.replace(RegExp("[:*]" + name + "/?", "g"), '');
+        }
+      };
+    })(this);
     _ref = this.requiredParams;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       name = _ref[_i];
       value = params[name];
-      url = url.replace(RegExp("[:*]" + name, "g"), value);
+      url = replaceParamInUrl(url, name, value);
       delete remainingParams[name];
     }
     _ref1 = this.optionalParams;
     for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
       name = _ref1[_j];
       if (value = params[name]) {
-        url = url.replace(RegExp("[:*]" + name, "g"), value);
+        url = replaceParamInUrl(url, name, value);
         delete remainingParams[name];
       }
     }
@@ -2211,6 +2231,15 @@ module.exports = Route = (function() {
     return s.replace(paramRegExp, callback);
   };
 
+  Route.prototype.replaceParamValue = function(name, value, direction) {
+    var _ref;
+    if ((_ref = this.options.replaceParams) != null ? _ref[name] : void 0) {
+      return this.options.replaceParams[name][direction](value);
+    } else {
+      return value;
+    }
+  };
+
   Route.prototype.paramCapturePattern = function(param) {
     if (param.charAt(0) === ':') {
       return '([^\/\?]+)';
@@ -2268,7 +2297,7 @@ module.exports = Route = (function() {
     for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
       match = _ref[index];
       paramName = this.allParams.length ? this.allParams[index] : index;
-      params[paramName] = match;
+      params[paramName] = this.replaceParamValue(paramName, match, 'in');
     }
     return params;
   };
@@ -2961,6 +2990,9 @@ utils = {
   },
   redirectTo: function(pathDesc, params, options) {
     return loader('chaplin/mediator').execute('router:route', pathDesc, params, options);
+  },
+  getCurrentRoute: function() {
+    return loader('chaplin/mediator').execute('router:getCurrentRoute');
   },
   querystring: {
     stringify: function(queryParams) {

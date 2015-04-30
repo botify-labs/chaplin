@@ -1,5 +1,12 @@
 See [upgrading guide](http://docs.chaplinjs.org/upgrading.html) if you're using old chaplin version and want to upgrade.
 
+# Chaplin 1.1.0 (30 April 2015) (Zallek - Botify)
+* Make project installable with bower
+* Add new route option replaceParams
+* Add utils getCurrentRoute
+* Fix reverse optionnal params
+* Fix trailing slash on root
+
 # Chaplin 1.0.0 (23 January 2014)
 * `route.previous` is now `undefined` instead of an empty object if there is no previous object.
 
