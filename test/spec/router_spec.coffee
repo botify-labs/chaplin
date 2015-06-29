@@ -457,12 +457,6 @@ define [
         url = route.reverse id: 5, page: 2, sort: 'price'
         expect(url).to.be 'items/5/page/2/sort/price'
 
-        ###
-        route = new Route 'items/:id(/page/:page/sort/:sort)', 'null', 'null'
-        url = route.reverse id: 5, page: 2, sort: 'price'
-        expect(url).to.be 'items/5/page/2/sort/price'
-        ###
-
       it 'should allow for reversing a route instance with optional splats', ->
         route = new Route 'items/:id(-*slug)', 'null', 'null'
         url = route.reverse id: 5, slug: "shirt"
@@ -472,12 +466,6 @@ define [
         route = new Route 'items/:id(/page/:page)(/sort/:sort)', 'null', 'null'
         url = route.reverse id: 5, page: 2
         expect(url).to.be 'items/5/page/2'
-
-        ###
-        route = new Route 'items/:id(/page/:page/sort/:sort)', 'null', 'null'
-        url = route.reverse id: 5, page: 2
-        expect(url).to.be 'items/5'
-        ###
 
       it 'should allow optional portions to be replaced by a string containing parenthesis', ->
         route = new Route 'items(/:id)', 'null', 'null'
@@ -496,14 +484,6 @@ define [
         expect(url).to.be 'items/5-boots'
         url = route.reverse id: 5, slug: 'boots', section: 'comments'
         expect(url).to.be 'items/5-boots/comments'
-
-        ###
-        route = new Route 'items/:id(-*slug/:desc)', 'null', 'null'
-        url = route.reverse id: 5, slug: 'shirt'
-        expect(url).to.be 'items/5'
-        url = route.reverse id: 5, slug: 'shirt', desc: 'brand new'
-        expect(url).to.be 'items/5-shirt/brand new'
-        ###
 
       it 'should reject reversals when there are not enough params', ->
         route = new Route 'params/:one/:two', 'null', 'null'
