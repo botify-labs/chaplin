@@ -87,13 +87,19 @@ module.exports = class Route
     url = @pattern
 
     # Replace param in URL.
-    # If value is undefined, remove both param name and next slash
-    replaceParamInUrl = (url, name, value) =>
+    replaceParamInUrl = (url, name, value, isOptionalParam) =>
       value = @replaceParamValue(name, value, 'out')
-      if value?
-        url.replace ///[:*]#{name}///g, value
+
+      if isOptionalParam
+        pattern = ///\(([^)]*?)[:*]#{name}\)///
+        value = "$1#{value}"
       else
-        url.replace ///[:*]#{name}\/?///g, ''
+        if value?
+          pattern = ///[:*]#{name}///
+        else # If value is undefined, remove both param name and next slash
+          pattern = ///[:*]#{name}\/?///
+
+      url.replace pattern, value
 
     # From a params hash; we need to be able to return
     # the actual URL this route represents.
@@ -106,15 +112,15 @@ module.exports = class Route
     # Replace optional params.
     for name in @optionalParams
       if value = params[name]
-        url = replaceParamInUrl url, name, value
+        url = replaceParamInUrl url, name, value, true
         delete remainingParams[name]
 
     # Kill unfulfilled optional portions.
     raw = url.replace optionalRegExp, (match, portion) ->
       if portion.match /[:*]/g
         ""
-      else
-        portion
+      else #otherwise, keep as is.
+        match
 
     # Add or remove trailing slash according to the Route options.
     url = processTrailingSlash raw, @options.trailing
