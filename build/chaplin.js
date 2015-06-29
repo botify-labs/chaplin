@@ -1,5 +1,5 @@
 /*!
- * Chaplin 1.1.0
+ * Chaplin 1.2.0
  *
  * Chaplin may be freely distributed under the MIT license.
  * For all details and documentation:
@@ -2099,13 +2099,20 @@ module.exports = Route = (function() {
     }
     url = this.pattern;
     replaceParamInUrl = (function(_this) {
-      return function(url, name, value) {
+      return function(url, name, value, isOptionalParam) {
+        var pattern;
         value = _this.replaceParamValue(name, value, 'out');
-        if (value != null) {
-          return url.replace(RegExp("[:*]" + name, "g"), value);
+        if (isOptionalParam) {
+          pattern = RegExp("\\(([^)]*?)[:*]" + name + "\\)");
+          value = "$1" + value;
         } else {
-          return url.replace(RegExp("[:*]" + name + "/?", "g"), '');
+          if (value != null) {
+            pattern = RegExp("[:*]" + name);
+          } else {
+            pattern = RegExp("[:*]" + name + "/?");
+          }
         }
+        return url.replace(pattern, value);
       };
     })(this);
     _ref = this.requiredParams;
@@ -2119,7 +2126,7 @@ module.exports = Route = (function() {
     for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
       name = _ref1[_j];
       if (value = params[name]) {
-        url = replaceParamInUrl(url, name, value);
+        url = replaceParamInUrl(url, name, value, true);
         delete remainingParams[name];
       }
     }
@@ -2127,7 +2134,7 @@ module.exports = Route = (function() {
       if (portion.match(/[:*]/g)) {
         return "";
       } else {
-        return portion;
+        return match;
       }
     });
     url = processTrailingSlash(raw, this.options.trailing);
