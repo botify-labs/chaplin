@@ -2101,18 +2101,17 @@ module.exports = Route = (function() {
     replaceParamInUrl = (function(_this) {
       return function(url, name, value, isOptionalParam) {
         var pattern;
+        pattern = "[:*]" + name;
         value = _this.replaceParamValue(name, value, 'out');
-        if (isOptionalParam) {
-          pattern = RegExp("\\(([^)]*?)[:*]" + name + "\\)");
-          value = "$1" + value;
-        } else {
-          if (value != null) {
-            pattern = RegExp("[:*]" + name);
-          } else {
-            pattern = RegExp("[:*]" + name + "/?");
-          }
+        if (value == null) {
+          value = '';
+          pattern = "" + pattern + "\\/?";
         }
-        return url.replace(pattern, value);
+        if (isOptionalParam) {
+          pattern = "\\(([^)]*?)" + pattern + "([^(]*?)\\)";
+          value = "$1" + value + "$2";
+        }
+        return url.replace(RegExp(pattern), value);
       };
     })(this);
     _ref = this.requiredParams;
