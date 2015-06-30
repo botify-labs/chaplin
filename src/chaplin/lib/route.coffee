@@ -88,18 +88,20 @@ module.exports = class Route
 
     # Replace param in URL.
     replaceParamInUrl = (url, name, value, isOptionalParam) =>
+      pattern = "[:*]#{name}"
       value = @replaceParamValue(name, value, 'out')
 
-      if isOptionalParam
-        pattern = ///\(([^)]*?)[:*]#{name}\)///
-        value = "$1#{value}"
-      else
-        if value?
-          pattern = ///[:*]#{name}///
-        else # If value is undefined, remove both param name and next slash
-          pattern = ///[:*]#{name}\/?///
+      # If value is undefined, remove both param name and next slash
+      if not value?
+        value = ''
+        pattern = "#{pattern}\\/?"
 
-      url.replace pattern, value
+      # If isOptionalParam, keep url parts inner parenthesis
+      if isOptionalParam
+        pattern = "\\(([^)]*?)#{pattern}([^(]*?)\\)"
+        value = "$1#{value}$2"
+
+      url.replace RegExp(pattern), value
 
     # From a params hash; we need to be able to return
     # the actual URL this route represents.

@@ -457,6 +457,11 @@ define [
         url = route.reverse id: 5, page: 2, sort: 'price'
         expect(url).to.be 'items/5/page/2/sort/price'
 
+      it 'should allow for reversing optional route params not defined', ->
+        route = new Route '(:items)', 'null', 'null'
+        url = route.reverse()
+        expect(url).to.be ''
+
       it 'should allow for reversing a route instance with optional splats', ->
         route = new Route 'items/:id(-*slug)', 'null', 'null'
         url = route.reverse id: 5, slug: "shirt"
@@ -514,6 +519,29 @@ define [
         route = new Route 'params', 'null', 'null', trailing: true
         url = route.reverse()
         expect(url).to.be 'params/'
+
+      it 'should add trailing slash accordingly to replaceParams', ->
+        options =
+          replaceParams:
+            area:
+              in: (area) -> if area is undefined then 'current' else area
+              out: (area) -> if area is 'current' then undefined else area
+
+        route = new Route '(:area)', 'null', 'null', options
+        url = route.reverse area: 'new'
+        expect(url).to.be 'new'
+        url = route.reverse area: 'current'
+        expect(url).to.be ''
+        url = route.reverse()
+        expect(url).to.be ''
+
+        route = new Route '(:area/)page/:id', 'null', 'null', options
+        url = route.reverse area: 'new', id: 1
+        expect(url).to.be 'new/page/1'
+        url = route.reverse area: 'current', id: 1
+        expect(url).to.be 'page/1'
+        url = route.reverse id: 1
+        expect(url).to.be 'page/1'
 
     describe 'Router reversing', ->
       register = ->
